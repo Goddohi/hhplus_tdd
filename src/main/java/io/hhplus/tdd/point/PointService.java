@@ -26,10 +26,12 @@ public class PointService {
 
     public UserPoint chargeUserPoint(long userId, long amount){
         UserPoint currentUserPoint = getUserPoint(userId);
+
         if(amount <= 0 ) {
             // throw new IllegalArgumentException("0원 초과의 금액만 충전이 가능합니다."); //간단하게 충전을 하지않는다.
             return currentUserPoint;
         }
+
         //충전 이력
         insertUserPointHistory( userId,
                                 amount,

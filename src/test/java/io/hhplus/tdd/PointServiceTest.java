@@ -72,8 +72,12 @@ public class PointServiceTest {
         long amount = 1000L;
 
         //
+
+        UserPoint current = new UserPoint(userId, 9000L, System.currentTimeMillis());
         UserPoint updated = new UserPoint(userId, 10000L, System.currentTimeMillis());
-        given(userPointRepository.insertOrUpdate(userId, amount)).willReturn(updated);
+
+        given(userPointRepository.selectById(userId)).willReturn(current);
+        given(userPointRepository.insertOrUpdate(userId, amount+current.point())).willReturn(updated);
 
         // When
         UserPoint result = pointService.chargeUserPoint(userId, amount);
@@ -85,7 +89,7 @@ public class PointServiceTest {
 
         // 2) 포인트 저장소 업데이트가 호출되었는지
         then(userPointRepository).should(times(1))
-                .insertOrUpdate(userId, amount);
+                .insertOrUpdate(userId, amount+current.point());
 
         // 3) 서비스 반환값 검증(더미로 준 값이 그대로 반환되어야 함)
         assertThat(result).isEqualTo(updated);
@@ -159,7 +163,7 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("사용 성공: 잔고 적은 사용 금액이면 포인트 업데이트 및 CHARGE 이력 생성")
+    @DisplayName("사용 성공: 잔고보다 적은 사용금액이면 포인트 업데이트 및 USE 이력 생성")
     void use_success_records_history_and_updates_point() {
         // Given
         long userId = 1L;
@@ -169,7 +173,7 @@ public class PointServiceTest {
         UserPoint current = new UserPoint(userId, 10000L, System.currentTimeMillis());
         UserPoint updated = new UserPoint(userId, 9000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
-        given(userPointRepository.insertOrUpdate(userId, amount)).willReturn(updated);
+        given(userPointRepository.insertOrUpdate(userId, current.point()+amount)).willReturn(updated);
 
         // When
         UserPoint result = pointService.useUserPoint(userId, amount);
@@ -181,7 +185,7 @@ public class PointServiceTest {
 
         // 2) 포인트 저장소 업데이트가 호출되었는지
         then(userPointRepository).should(times(1))
-                .insertOrUpdate(userId, amount);
+                .insertOrUpdate(userId, current.point()+amount);
 
         // 3) 서비스 반환값 검증(더미로 준 값이 그대로 반환되어야 함)
         assertThat(result).isEqualTo(updated);
