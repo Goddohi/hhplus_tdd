@@ -40,3 +40,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+
+/.idea/.name
+/.idea/codeStyles/codeStyleConfig.xml
+/.idea/codeStyles/Project.xml
