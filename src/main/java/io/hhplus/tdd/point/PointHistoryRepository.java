@@ -17,4 +17,8 @@ public class PointHistoryRepository {
     public List<PointHistory> selectAllByUserId(long userId) {
         return pointHistoryTable.selectAllByUserId(userId);
     }
+
+    public PointHistory insert(long userId, long amount, TransactionType type, long updateMillis){
+        return pointHistoryTable.insert(userId, amount, type, updateMillis);
+    }
 }

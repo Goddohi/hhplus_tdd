@@ -1,7 +1,6 @@
 package io.hhplus.tdd.point;
 
 import io.hhplus.tdd.database.UserPointTable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -14,8 +13,12 @@ public class UserPointRepository {
         this.userPointTable = userPointTable;
     }
 
-    public UserPoint selectById(Long id) {
+    public UserPoint selectById(long id) {
         return userPointTable.selectById(id);
+    }
+
+    public UserPoint insertOrUpdate(long id, long amount) {
+        return userPointTable.insertOrUpdate(id,amount);
     }
 
 }
