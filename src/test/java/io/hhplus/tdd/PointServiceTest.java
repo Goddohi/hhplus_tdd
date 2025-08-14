@@ -1,9 +1,7 @@
 package io.hhplus.tdd;
 
 
-import io.hhplus.tdd.point.PointService;
-import io.hhplus.tdd.point.UserPoint;
-import io.hhplus.tdd.point.UserPointRepository;
+import io.hhplus.tdd.point.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
@@ -24,6 +23,8 @@ public class PointServiceTest {
 
     @Mock
     UserPointRepository userPointRepository;
+    @Mock
+    PointHistoryRepository pointHistoryRepository;
 
 
     @Test
@@ -35,6 +36,24 @@ public class PointServiceTest {
 
         // when
         UserPoint result = pointService.getUserPoint(userId);
+
+        // then
+        assertEquals(expected, result);
+    }
+
+
+    @Test
+    @DisplayName("유저 ID로 포인트 충전,사용과 같은 이용내역을 조회한다.")
+    void SelectUserId_ReturnPointHistory() {
+        long userId = 1L;
+        List<PointHistory> expected = List.of(
+                new PointHistory(1L,userId, 1000L, TransactionType.CHARGE, Instant.now().toEpochMilli()),
+                new PointHistory(2L,userId, 500L, TransactionType.USE, Instant.now().toEpochMilli())
+        );
+        given(pointHistoryRepository.selectAllByUserId(userId)).willReturn(expected);
+
+        // when
+        List<PointHistory> result = pointService.getUserPointHistory(userId);
 
         // then
         assertEquals(expected, result);
