@@ -53,7 +53,7 @@ public class PointServiceTest {
         long userId = 1L;
         List<PointHistory> expected = List.of(
                 new PointHistory(1L,userId, 1000L, TransactionType.CHARGE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli()),
-                new PointHistory(2L,userId, 500L, TransactionType.USE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli())
+                new PointHistory(2L,userId, -500L, TransactionType.USE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli())
         );
         given(pointHistoryRepository.selectAllByUserId(userId)).willReturn(expected);
 
@@ -156,6 +156,79 @@ public class PointServiceTest {
 
         // 2) 반환값이 그대로 전달되는지
         assertThat(result).isEqualTo(saved);
+    }
+
+    @Test
+    @DisplayName("사용 성공: 잔고 적은 사용 금액이면 포인트 업데이트 및 CHARGE 이력 생성")
+    void use_success_records_history_and_updates_point() {
+        // Given
+        long userId = 1L;
+        long amount = -1000L;
+
+        //
+        UserPoint current = new UserPoint(userId, 10000L, System.currentTimeMillis());
+        UserPoint updated = new UserPoint(userId, 9000L, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+        given(userPointRepository.insertOrUpdate(userId, amount)).willReturn(updated);
+
+        // When
+        UserPoint result = pointService.useUserPoint(userId, amount);
+
+        // Then
+        // 1) 이력 insert가 Use 타입으로 호출되었는지
+        then(pointHistoryRepository).should(times(1))
+                .insert(eq(userId), eq(amount), eq(TransactionType.USE), anyLong());
+
+        // 2) 포인트 저장소 업데이트가 호출되었는지
+        then(userPointRepository).should(times(1))
+                .insertOrUpdate(userId, amount);
+
+        // 3) 서비스 반환값 검증(더미로 준 값이 그대로 반환되어야 함)
+        assertThat(result).isEqualTo(updated);
+    }
+
+    @Test
+    @DisplayName("사용 실패: 양수 금액이면 업데이트/이력 생성 없이 현재 포인트만 반환")
+    void use_fail_positive_amount_no_history_no_update_returns_current_point() {
+        // Given
+        long userId = 2L;
+        long positiveAmount = 500L;
+
+        UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+
+        // When
+        UserPoint result = pointService.useUserPoint(userId, positiveAmount);
+
+        // Then
+        // 이력/업데이트는 호출되지 않아야 함
+        then(pointHistoryRepository).shouldHaveNoInteractions();
+        then(userPointRepository).shouldHaveNoMoreInteractions();
+
+        // 현재 포인트가 그대로 반환
+        assertThat(result).isEqualTo(current);
+    }
+
+    @Test
+    @DisplayName("사용 실패: 돈이 부족하여 사용불가 업데이트/이력 생성 없이 현재 포인트만 반환")
+    void use_fail_no_history_no_update_returns_current_point() {
+        // Given
+        long userId = 2L;
+        long negativeAmount = -500L;
+
+        UserPoint current = new UserPoint(userId, 200L, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+
+        // When
+        UserPoint result = pointService.useUserPoint(userId, negativeAmount);
+
+        // Then
+        // 이력/업데이트는 호출되지 않아야 함
+        then(pointHistoryRepository).shouldHaveNoInteractions();
+        then(userPointRepository).shouldHaveNoMoreInteractions();
+
+        // 현재 포인트가 그대로 반환
+        assertThat(result).isEqualTo(current);
     }
 
 }
