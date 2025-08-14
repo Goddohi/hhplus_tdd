@@ -25,9 +25,10 @@ public class PointService {
     }
 
     public UserPoint chargeUserPoint(long userId, long amount){
+        UserPoint currentUserPoint = getUserPoint(userId);
         if(amount <= 0 ) {
             // throw new IllegalArgumentException("0원 초과의 금액만 충전이 가능합니다."); //간단하게 충전을 하지않는다.
-            return getUserPoint(userId);
+            return currentUserPoint;
         }
         //충전 이력
         insertUserPointHistory( userId,
@@ -35,8 +36,29 @@ public class PointService {
                                 TransactionType.CHARGE,
                                 System.currentTimeMillis());
 
-        return userPointRepository.insertOrUpdate(userId,amount);
+        return userPointRepository.insertOrUpdate(userId,currentUserPoint.point()+amount);
     }
+
+    public UserPoint useUserPoint(long userId, long amount){
+        UserPoint currentUserPoint = getUserPoint(userId);
+        if(amount > 0 )
+            return currentUserPoint;
+
+        if(currentUserPoint.point() < -amount)
+            return currentUserPoint;
+
+
+        //사용 이력
+        insertUserPointHistory( userId,
+                amount,
+                TransactionType.USE,
+                System.currentTimeMillis());
+
+        return userPointRepository.insertOrUpdate(userId,currentUserPoint.point()+amount);
+
+    }
+
+
 
     public PointHistory insertUserPointHistory(long userId, long amount,TransactionType transactionType, long updateMillis){
         return pointHistoryRepository.insert(userId,amount,transactionType,updateMillis);

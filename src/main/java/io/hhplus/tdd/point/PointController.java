@@ -47,9 +47,12 @@ public class PointController {
 
     /**
      * TODO - 특정 유저의 포인트를 사용하는 기능
+     * 1. 음수로 들어온다.
+     * 2. 0원사용도 저장한다
+     * 3. 잔고가 없을 경우 사용하지 않는다.
      */
     @PatchMapping("{id}/use")
     public UserPoint use(@PathVariable long id, @RequestBody long amount) {
-        return new UserPoint(0, 0, 0);
+        return pointService.useUserPoint(id,amount);
     }
 }
